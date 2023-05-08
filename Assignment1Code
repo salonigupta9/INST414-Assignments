@@ -1,0 +1,39 @@
+import requests
+import pandas as pd
+
+drivers = []
+for year in range(1950, 2022):
+    response = requests.get(f'http://ergast.com/api/f1/{year}/driverStandings.json')
+    standings = response.json()['MRData']['StandingsTable']['StandingsLists'][0]['DriverStandings']
+    for driver in standings:
+        if 'wins' in driver:
+            drivers.append({
+                'driverId': driver['Driver']['driverId'],
+                'givenName': driver['Driver']['givenName'],
+                'familyName': driver['Driver']['familyName'],
+                'nationality': driver['Driver']['nationality'].strip(),
+                'season': year,
+                'wins': int(driver['wins']),
+                'podiums': int(driver.get('podiums', 0)),
+                'championships': int(driver.get('championships', 0))
+            })
+
+drivers = pd.DataFrame(drivers)
+
+race_wins = drivers.sort_values('wins', ascending=False)[['driverId', 'givenName', 'familyName', 'nationality', 'wins']].head(10)
+podiums = drivers.sort_values('podiums', ascending=False)[['driverId', 'givenName', 'familyName', 'nationality', 'podiums']].head(10)
+championships = drivers.sort_values('championships', ascending=False)[['driverId', 'givenName', 'familyName', 'nationality', 'championships']].head(10)
+
+print("Top 10 drivers by race wins:")
+print(race_wins)
+print("\nTop 10 drivers by podium finishes:")
+print(podiums)
+print("\nTop 10 drivers by championships:")
+print(championships)
+
+drivers['nationality'] = drivers['nationality'].str.strip().str.title()
+
+nationalities = drivers.groupby('nationality').size().reset_index(name='count').sort_values('count', ascending=False).head(10)
+
+print("\nTop 10 nationalities by number of drivers:")
+print(nationalities)
