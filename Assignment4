@@ -1,0 +1,47 @@
+import pandas as pd
+import numpy as np
+from sklearn.cluster import KMeans
+from sklearn.preprocessing import StandardScaler
+import matplotlib.pyplot as plt
+
+# Load the heart disease patient dataset from Kaggle
+data = pd.read_csv("heart_disease_patients.csv")
+
+# Remove rows with missing values
+data.dropna(inplace=True)
+
+# Standardize the features
+scaler = StandardScaler()
+scaled_data = scaler.fit_transform(data)
+
+# Determine the optimal number of clusters using the elbow method
+sse = []
+for k in range(1, 11):
+    kmeans = KMeans(n_clusters=k)
+    kmeans.fit(scaled_data)
+    sse.append(kmeans.inertia_)
+plt.plot(range(1, 11), sse)
+plt.title('Elbow Method')
+plt.xlabel('Number of Clusters')
+plt.ylabel('SSE')
+plt.show()
+
+# Based on the elbow method, we choose k=3
+kmeans = KMeans(n_clusters=3)
+kmeans.fit(scaled_data)
+labels = kmeans.labels_
+
+# Visualize the clusters in 2D using PCA
+from sklearn.decomposition import PCA
+pca = PCA(n_components=2)
+pca_data = pca.fit_transform(scaled_data)
+plt.scatter(pca_data[:, 0], pca_data[:, 1], c=labels)
+plt.title('K-Means Clustering of Heart Disease Patients')
+plt.xlabel('PCA Dimension 1')
+plt.ylabel('PCA Dimension 2')
+plt.show()
+
+# Print the characteristics of each cluster
+cluster_data = pd.concat([data, pd.DataFrame({'cluster':labels})], axis=1)
+for i in range(3):
+    print(f"Cluster {i+1}:\n{cluster_data[cluster_data['cluster']==i].describe()}\n")
