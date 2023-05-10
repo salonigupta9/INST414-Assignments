@@ -1,0 +1,28 @@
+import pandas as pd
+import numpy as np
+from sklearn.feature_extraction.text import CountVectorizer
+from sklearn.metrics.pairwise import cosine_similarity
+
+df = pd.read_csv('product_info.csv')
+
+df['ingredients'] = df['ingredients'].fillna('')
+df = df.drop_duplicates(subset=['brand', 'name'])
+
+vectorizer = CountVectorizer(token_pattern=r'\b\w+\b')
+X = vectorizer.fit_transform(df['ingredients'])
+
+cosine_similarities = cosine_similarity(X)
+
+query_products = ['Drunk Elephant Protini Polypeptide Cream',
+                  'La Mer The Moisturizing Soft Cream',
+                  'Sunday Riley Good Genes All-In-One Lactic Acid Treatment']
+
+query_indices = [df.index[df['name'] == product][0] for product in query_products]
+
+for i in range(len(query_products)):
+    cosine_scores = list(enumerate(cosine_similarities[query_indices[i]]))
+    cosine_scores = sorted(cosine_scores, key=lambda x: x[1], reverse=True)
+    similar_products = [df.iloc[score[0]]['name'] for score in cosine_scores[1:11]]
+    print(f"Top 10 most similar products to {query_products[i]}:")
+    print(similar_products)
+    print()
