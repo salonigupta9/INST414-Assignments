@@ -1,0 +1,39 @@
+import pandas as pd
+import numpy as np
+from sklearn.model_selection import train_test_split
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import classification_report, confusion_matrix
+
+# Load the dataset
+df = pd.read_csv("glassdoor_comany.csv")
+
+# Create a new column called "high_rating" that indicates whether a company has a high rating or not
+df["high_rating"] = df["rating"].apply(lambda x: 1 if x >= 4 else 0)
+
+# Define the features and the target variable
+X = df[["size", "type_of_ownership", "industry", "sector"]]
+y = df["high_rating"]
+
+# Convert categorical variables to dummy variables
+X = pd.get_dummies(X, drop_first=True)
+
+# Split the data into training and testing sets
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+# Fit a logistic regression model
+clf = LogisticRegression(random_state=42, max_iter=1000)
+clf.fit(X_train, y_train)
+
+# Evaluate the model on the test set
+y_pred = clf.predict(X_test)
+print(classification_report(y_test, y_pred))
+print(confusion_matrix(y_test, y_pred))
+
+# Identify the five samples that the model got wrong
+wrong_predictions = X_test[y_test != y_pred]
+wrong_predictions_labels = y_test[y_test != y_pred]
+for i in range(5):
+    print("Sample", i+1)
+    print(wrong_predictions.iloc[i])
+    print("Actual label:", wrong_predictions_labels.iloc[i])
+    print("Predicted label:", clf.predict(wrong_predictions.iloc[[i]]))
