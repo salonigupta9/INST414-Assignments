@@ -1,0 +1,45 @@
+import pandas as pd
+import networkx as nx
+import matplotlib.pyplot as plt
+
+# Load the dataset into a Pandas dataframe
+crime_data = pd.read_csv('Crime_Incidents_February_2017_to_Present.csv')
+
+# Define nodes and edges based on the data
+location_nodes = crime_data['location'].unique().tolist()
+crime_nodes = crime_data['description'].unique().tolist()
+
+edges = []
+for loc in location_nodes:
+    loc_crimes = crime_data[crime_data['location'] == loc]['description'].tolist()
+    for crime in loc_crimes:
+        edges.append((loc, crime))
+
+# Create the graph object
+G = nx.Graph()
+
+# Add nodes and edges to the graph
+G.add_nodes_from(location_nodes, node_type='location')
+G.add_nodes_from(crime_nodes, node_type='crime')
+G.add_edges_from(edges)
+
+# Calculate centrality measures for each node
+degree_centrality = nx.degree_centrality(G)
+closeness_centrality = nx.closeness_centrality(G)
+betweenness_centrality = nx.betweenness_centrality(G)
+
+# Identify the most important nodes based on each centrality measure
+top_degree_centrality = sorted(degree_centrality, key=degree_centrality.get, reverse=True)[:3]
+top_closeness_centrality = sorted(closeness_centrality, key=closeness_centrality.get, reverse=True)[:3]
+top_betweenness_centrality = sorted(betweenness_centrality, key=betweenness_centrality.get, reverse=True)[:3]
+
+# Print the most important nodes based on each centrality measure
+print('Top 3 nodes by degree centrality:', top_degree_centrality)
+print('Top 3 nodes by closeness centrality:', top_closeness_centrality)
+print('Top 3 nodes by betweenness centrality:', top_betweenness_centrality)
+
+# Draw the graph
+node_colors = [node[1]['node_type'] for node in G.nodes(data=True)]
+pos = nx.spring_layout(G, seed=42)
+nx.draw(G, pos, node_color=node_colors, with_labels=True)
+plt.show()
